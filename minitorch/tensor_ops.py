@@ -343,6 +343,7 @@ def tensor_zip(fn: Callable[[float, float], float]) -> Any:
             a_pos = index_to_position(a_index, a_strides)
             b_pos = index_to_position(b_index, b_strides)
 
+            # out_pos = index_to_position(out_index, out_strides)
             out[i] = fn(a_storage[a_pos], b_storage[b_pos])
     return _zip
 
@@ -380,17 +381,38 @@ def tensor_reduce(fn: Callable[[float, float], float]) -> Any:
         # TODO: Implement for Task 2.3.
         # raise NotImplementedError("Need to implement for Task 2.3")
 
-        out_index = np.array([0] * out_shape)
+        # out_index = np.array([0] * out_shape)
+        #
+        # for i in range(len(out)):
+        #     to_index(i, out_shape, out_index)
+        #
+        #     for j in range(a_shape[reduce_dim]):
+        #         # shape be same
+        #         a_index = out_index.copy()
+        #         a_index[reduce_dim] = j
+        #         pos = index_to_position(a_index, a_strides)
+        #         out[pos] = fn(out[pos], a_storage[pos])
+        # 参考了别人的实现https://github.com/minitorch/minitorch-module-2-mzabelin8/blob/master/minitorch/tensor_ops.py
+        # 自己写的2.4一直过不去
+        total_elements = int(np.prod(a_shape))
+        index = 0 * a_shape
 
-        for i in range(len(out)):
-            to_index(i, out_shape, out_index)
+        for i in range(total_elements):
+            to_index(i, a_shape, index)
 
-            for j in range(a_shape[reduce_dim]):
-                # shape be same
-                a_index = out_index.copy()
-                a_index[reduce_dim] = j
-                pos = index_to_position(a_index, a_strides)
-                out[pos] = fn(out[pos], a_storage[pos])
+            out_index = index.copy()
+            out_index[reduce_dim] = 0
+
+            a_pos = index_to_position(index, a_strides)
+            out_pos = index_to_position(out_index, out_strides)
+
+            value = a_storage[a_pos]
+
+            if index[reduce_dim] == 0:
+                out[out_pos] = value
+            else:
+                out[out_pos] = fn(out[out_pos], value)
+
     return _reduce
 
 
